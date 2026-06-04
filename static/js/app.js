@@ -571,7 +571,8 @@ async function loadSharedFiles() {
         filterState.sharedFiles = { type: '', size: '', date: '', owner: '' };
         allFiles.sharedFiles = [];
         
-        const response = await apiRequest('/files/shared?skip=0&limit=20');
+        const response = await apiRequest('/files/shared-with-me?skip=0&limit=20');
+
         
         if (response && response.items) {
             allFiles.sharedFiles = response.items;
@@ -632,6 +633,9 @@ function openShareModal(fileId, filename) {
 function closeShareModal() {
     elements.shareModal.classList.add('hidden');
     currentShareFileId = null;
+    selectedShareUser = null;
+    document.getElementById('share-username').value = '';
+    document.getElementById('user-search-results').classList.add('hidden');
 }
 
 async function openDetailsModal(fileId) {
@@ -812,6 +816,60 @@ function getEventIcon(eventType) {
     return icons[eventType] || 'fa-circle';
 }
 
+// User search for sharing
+let selectedShareUser = null;
+let searchTimeout = null;
+
+async function searchUsers(query) {
+    if (query.length < 2) {
+        document.getElementById('user-search-results').classList.add('hidden');
+        return;
+    }
+    
+    try {
+        const users = await apiRequest(`/auth/users/search?query=${encodeURIComponent(query)}`);
+        const resultsEl = document.getElementById('user-search-results');
+        
+        if (users && users.length > 0) {
+            resultsEl.innerHTML = users.map(u => `
+                <div class="search-result-item" data-username="${escapeHtml(u.username)}" data-userid="${u.id}">
+                    <div class="username">${escapeHtml(u.username)}</div>
+                    <div class="email">${escapeHtml(u.email)}</div>
+                </div>
+            `).join('');
+            resultsEl.classList.remove('hidden');
+            
+            // Add click handlers
+            resultsEl.querySelectorAll('.search-result-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    selectedShareUser = item.dataset.username;
+                    document.getElementById('share-username').value = selectedShareUser;
+                    resultsEl.classList.add('hidden');
+                });
+            });
+        } else {
+            resultsEl.innerHTML = '<div class="search-result-item"><div class="username">No users found</div></div>';
+            resultsEl.classList.remove('hidden');
+        }
+    } catch (error) {
+        console.error('User search error:', error);
+    }
+}
+
+// Update share modal input
+document.getElementById('share-username').addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    selectedShareUser = null;
+    searchTimeout = setTimeout(() => searchUsers(e.target.value.trim()), 300);
+});
+
+// Close search results when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#share-username') && !e.target.closest('#user-search-results')) {
+        document.getElementById('user-search-results').classList.add('hidden');
+    }
+});
+
 // ═══════════════════════════════════════════════════════════════
 // EVENT LISTENERS
 // ═══════════════════════════════════════════════════════════════
@@ -990,18 +1048,14 @@ elements.uploadBtn.addEventListener('click', async () => {
 
 // Share modal
 document.getElementById('share-confirm').addEventListener('click', async () => {
-    const username = document.getElementById('share-username').value.trim();
+    const usernameInput = document.getElementById('share-username').value.trim();
+    const username = selectedShareUser || usernameInput;
     const canDownload = document.getElementById('share-download').checked;
     const confirmBtn = document.getElementById('share-confirm');
     const originalText = confirmBtn.innerHTML;
 
     if (!username) {
-        showToast('Please enter a username to share with', 'warning');
-        return;
-    }
-
-    if (username.length < 3) {
-        showToast('Username must be at least 3 characters', 'warning');
+        showToast('Please select a user to share with', 'warning');
         return;
     }
 
@@ -1319,8 +1373,7 @@ async function loadMoreSharedFiles() {
     
     try {
         const skip = paginationState.sharedFiles.skip + paginationState.sharedFiles.limit;
-        const response = await apiRequest(`/files/shared?skip=${skip}&limit=${paginationState.sharedFiles.limit}`);
-        
+        const response = await apiRequest(`/files/shared-with-me?skip=${skip}&limit=${paginationState.sharedFiles.limit}`);
         if (response && response.items) {
             allFiles.sharedFiles = allFiles.sharedFiles.concat(response.items);
             paginationState.sharedFiles.skip = skip;

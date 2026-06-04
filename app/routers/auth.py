@@ -172,3 +172,33 @@ async def get_me(current_user: User = Depends(get_current_active_user)):
 async def logout(current_user: User = Depends(get_current_active_user)):
     """Logout (client should discard token)."""
     return {"message": "Successfully logged out"}
+
+
+@router.get("/users/search")
+async def search_users(
+    query: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Search for users by username (for sharing files)."""
+    if len(query) < 2:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Search query must be at least 2 characters"
+        )
+    
+    # Search for users excluding current user
+    users = db.query(User).filter(
+        User.username.ilike(f"%{query}%"),
+        User.id != current_user.id,
+        User.is_active == True
+    ).limit(10).all()
+    
+    return [
+        {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email
+        }
+        for user in users
+    ]
