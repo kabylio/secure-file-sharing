@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure File Sharing System</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Navigation -->
+        <nav class="navbar" id="navbar">
+            <div class="nav-brand">
+                <i class="fas fa-shield-alt"></i>
+                <span>SecureShare</span>
+            </div>
+            <div class="nav-links" id="nav-links">
+                <a href="#" class="nav-link active" data-page="dashboard"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="#" class="nav-link" data-page="upload"><i class="fas fa-upload"></i> Upload</a>
+                <a href="#" class="nav-link" data-page="files"><i class="fas fa-folder"></i> My Files</a>
+                <a href="#" class="nav-link" data-page="shared"><i class="fas fa-share-alt"></i> Shared</a>
+                <a href="#" class="nav-link" data-page="audit"><i class="fas fa-clipboard-list"></i> Audit Logs</a>
+            </div>
+            <div class="nav-user" id="nav-user">
+                <span id="user-name"></span>
+                <button class="btn btn-outline" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </nav>
+
+        <!-- Auth Container -->
+        <div class="auth-container" id="auth-container">
+            <div class="auth-box">
+                <div class="auth-header">
+                    <i class="fas fa-shield-alt"></i>
+                    <h1>Secure File Sharing</h1>
+                    <p>End-to-end encrypted file storage & sharing</p>
+                </div>
+
+                <div class="auth-tabs">
+                    <button class="auth-tab active" data-tab="login">Login</button>
+                    <button class="auth-tab" data-tab="register">Register</button>
+                </div>
+
+                <!-- Login Form -->
+                <form class="auth-form" id="login-form">
+                    <div class="form-group">
+                        <label><i class="fas fa-user"></i> Username</label>
+                        <input type="text" id="login-username" required placeholder="Enter username">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-lock"></i> Password</label>
+                        <input type="password" id="login-password" required placeholder="Enter password">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </button>
+                    <div class="auth-features">
+                        <span><i class="fas fa-check-circle"></i> AES-256 Encryption</span>
+                        <span><i class="fas fa-check-circle"></i> RSA Key Pairs</span>
+                        <span><i class="fas fa-check-circle"></i> Digital Signatures</span>
+                    </div>
+                </form>
+
+                <!-- Register Form -->
+                <form class="auth-form hidden" id="register-form">
+                    <div class="form-group">
+                        <label><i class="fas fa-user"></i> Username</label>
+                        <input type="text" id="reg-username" required placeholder="Choose username" minlength="3">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-envelope"></i> Email</label>
+                        <input type="email" id="reg-email" required placeholder="Enter email">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-lock"></i> Password</label>
+                        <input type="password" id="reg-password" required placeholder="Min 8 characters" minlength="8">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-user-plus"></i> Create Account
+                    </button>
+                    <div class="auth-features">
+                        <span><i class="fas fa-key"></i> Auto-generated RSA-2048 key pair</span>
+                        <span><i class="fas fa-database"></i> Password hashed with bcrypt</span>
+                    </div>
+                </form>
+
+                <div class="auth-message" id="auth-message"></div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content hidden" id="main-content">
+            <!-- Dashboard Page -->
+            <div class="page" id="page-dashboard">
+                <div class="page-header">
+                    <h2><i class="fas fa-home"></i> Dashboard</h2>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-file-alt"></i>
+                        <div class="stat-info">
+                            <h3 id="stat-total-files">0</h3>
+                            <p>My Files</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-share-alt"></i>
+                        <div class="stat-info">
+                            <h3 id="stat-shared-with-me">0</h3>
+                            <p>Shared With Me</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-upload"></i>
+                        <div class="stat-info">
+                            <h3 id="stat-uploads">0</h3>
+                            <p>Total Uploads</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-download"></i>
+                        <div class="stat-info">
+                            <h3 id="stat-downloads">0</h3>
+                            <p>Total Downloads</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard-sections">
+                    <div class="section">
+                        <h3><i class="fas fa-clock"></i> Recent Uploads</h3>
+                        <div class="file-list" id="recent-uploads"></div>
+                    </div>
+                    <div class="section">
+                        <h3><i class="fas fa-clipboard-list"></i> Recent Activity</h3>
+                        <div class="audit-list" id="recent-activity"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Page -->
+            <div class="page hidden" id="page-upload">
+                <div class="page-header">
+                    <h2><i class="fas fa-upload"></i> Upload File</h2>
+                </div>
+                <div class="upload-container">
+                    <div class="upload-zone" id="upload-zone">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <h3>Drag & Drop or Click to Upload</h3>
+                        <p>Files are encrypted with AES-256-GCM before storage</p>
+                        <input type="file" id="file-input" hidden>
+                    </div>
+                    <div class="upload-details hidden" id="upload-details">
+                        <div class="file-preview">
+                            <i class="fas fa-file"></i>
+                            <span id="upload-filename"></span>
+                            <span id="upload-filesize"></span>
+                        </div>
+                        <div class="upload-options">
+                            <label class="checkbox">
+                                <input type="checkbox" id="sign-file">
+                                <span>Sign file with digital signature</span>
+                            </label>
+                        </div>
+                        <div class="upload-progress hidden" id="upload-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progress-fill"></div>
+                            </div>
+                            <span id="progress-text">Encrypting...</span>
+                        </div>
+                        <button class="btn btn-primary" id="upload-btn">
+                            <i class="fas fa-lock"></i> Encrypt & Upload
+                        </button>
+                    </div>
+                    <div class="upload-result hidden" id="upload-result"></div>
+                </div>
+            </div>
+
+            <!-- My Files Page -->
+            <div class="page hidden" id="page-files">
+                <div class="page-header">
+                    <h2><i class="fas fa-folder"></i> My Files</h2>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <input type="text" id="search-my-files" placeholder="🔍 Search my files..." 
+                        style="width: 100%; max-width: 400px; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); color: var(--text);">
+                </div>
+                <!-- Advanced Filters -->
+                <div class="filters-container" id="my-files-filters" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border);">
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">File Type</label>
+                            <select id="filter-type-my" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);">
+                                <option value="">All Types</option>
+                                <option value="document">Documents (.pdf, .doc, .docx, .txt)</option>
+                                <option value="image">Images (.jpg, .png, .gif, .webp)</option>
+                                <option value="video">Videos (.mp4, .avi, .mov)</option>
+                                <option value="audio">Audio (.mp3, .wav, .flac)</option>
+                                <option value="archive">Archives (.zip, .rar, .7z)</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">File Size</label>
+                            <select id="filter-size-my" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);">
+                                <option value="">Any Size</option>
+                                <option value="small">Smaller than 1 MB</option>
+                                <option value="medium">1 MB - 50 MB</option>
+                                <option value="large">Larger than 50 MB</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Date Range</label>
+                            <select id="filter-date-my" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);">
+                                <option value="">Any Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="year">This Year</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm" id="clear-filters-my" style="margin-top: 1rem;">Clear Filters</button>
+                </div>
+                <button class="btn btn-sm btn-outline" id="toggle-filters-my" style="margin-bottom: 1rem;"><i class="fas fa-filter"></i> Show Filters</button>
+                <div class="file-grid" id="my-files-grid"></div>
+                <div class="empty-state hidden" id="my-files-empty">
+                    <i class="fas fa-folder-open"></i>
+                    <p>No files uploaded yet</p>
+                </div>
+                <div id="infinite-scroll-my" style="text-align: center; padding: 2rem; display: none;">
+                    <div style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--primary);">
+                        <span style="animation: spin 1s linear infinite;"><i class="fas fa-spinner"></i></span>
+                        Loading more files...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shared Files Page -->
+            <div class="page hidden" id="page-shared">
+                <div class="page-header">
+                    <h2><i class="fas fa-share-alt"></i> Shared With Me</h2>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <input type="text" id="search-shared-files" placeholder="🔍 Search shared files..." 
+                        style="width: 100%; max-width: 400px; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); color: var(--text);">
+                </div>
+                <!-- Advanced Filters -->
+                <div class="filters-container" id="shared-files-filters" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border);">
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">File Type</label>
+                            <select id="filter-type-shared" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);">
+                                <option value="">All Types</option>
+                                <option value="document">Documents (.pdf, .doc, .docx, .txt)</option>
+                                <option value="image">Images (.jpg, .png, .gif, .webp)</option>
+                                <option value="video">Videos (.mp4, .avi, .mov)</option>
+                                <option value="audio">Audio (.mp3, .wav, .flac)</option>
+                                <option value="archive">Archives (.zip, .rar, .7z)</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">File Size</label>
+                            <select id="filter-size-shared" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);">
+                                <option value="">Any Size</option>
+                                <option value="small">Smaller than 1 MB</option>
+                                <option value="medium">1 MB - 50 MB</option>
+                                <option value="large">Larger than 50 MB</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Owner</label>
+                            <input type="text" id="filter-owner-shared" placeholder="Filter by owner..." style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);">
+                        </div>
+                    </div>
+                    <button class="btn btn-sm" id="clear-filters-shared" style="margin-top: 1rem;">Clear Filters</button>
+                </div>
+                <button class="btn btn-sm btn-outline" id="toggle-filters-shared" style="margin-bottom: 1rem;"><i class="fas fa-filter"></i> Show Filters</button>
+                <div class="file-grid" id="shared-files-grid"></div>
+                <div class="empty-state hidden" id="shared-files-empty">
+                    <i class="fas fa-inbox"></i>
+                    <p>No files shared with you yet</p>
+                </div>
+                <div id="infinite-scroll-shared" style="text-align: center; padding: 2rem; display: none;">
+                    <div style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--primary);">
+                        <span style="animation: spin 1s linear infinite;"><i class="fas fa-spinner"></i></span>
+                        Loading more files...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audit Logs Page -->
+            <div class="page hidden" id="page-audit">
+                <div class="page-header">
+                    <h2><i class="fas fa-clipboard-list"></i> Security Audit Logs</h2>
+                </div>
+                <div class="audit-container">
+                    <div class="audit-filters">
+                        <button class="btn btn-sm active" data-filter="all">All Events</button>
+                        <button class="btn btn-sm" data-filter="LOGIN_ATTEMPT">Logins</button>
+                        <button class="btn btn-sm" data-filter="FILE_UPLOAD">Uploads</button>
+                        <button class="btn btn-sm" data-filter="FILE_DOWNLOAD">Downloads</button>
+                        <button class="btn btn-sm" data-filter="FILE_SHARE">Shares</button>
+                    </div>
+                    <div class="audit-table-container">
+                        <table class="audit-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Event</th>
+                                    <th>Description</th>
+                                    <th>IP Address</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audit-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Share Modal -->
+        <div class="modal hidden" id="share-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-share-alt"></i> Share File</h3>
+                    <button class="modal-close" id="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p id="share-file-name"></p>
+                    <div class="form-group">
+                        <label>Recipient Username</label>
+                        <input type="text" id="share-username" placeholder="Enter username">
+                    </div>
+                    <div class="share-permissions">
+                        <label class="checkbox">
+                            <input type="checkbox" id="share-view" checked disabled>
+                            <span>Can View</span>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" id="share-download" checked>
+                            <span>Can Download</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" id="share-cancel">Cancel</button>
+                    <button class="btn btn-primary" id="share-confirm">
+                        <i class="fas fa-share"></i> Share File
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- File Details Modal -->
+        <div class="modal hidden" id="details-modal">
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3><i class="fas fa-info-circle"></i> File Details</h3>
+                    <button class="modal-close" id="details-close">&times;</button>
+                </div>
+                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                    <div id="details-body" style="display: grid; gap: 1.5rem;">
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted);">File Name</label>
+                            <p id="detail-filename" style="margin: 0; padding: 0.75rem; background: var(--bg); border-radius: 4px; word-break: break-all;"></p>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div>
+                                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted);">File Size</label>
+                                <p id="detail-filesize" style="margin: 0;"></p>
+                            </div>
+                            <div>
+                                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted);">File Type</label>
+                                <p id="detail-filetype" style="margin: 0;"></p>
+                            </div>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted);">SHA-256 Hash</label>
+                            <p id="detail-hash" style="margin: 0; padding: 0.75rem; background: var(--bg); border-radius: 4px; font-family: monospace; font-size: 0.85rem; word-break: break-all;"></p>
+                            <small style="color: var(--text-muted); display: block; margin-top: 0.5rem;">First 16 characters of file hash</small>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div>
+                                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted);">Owner</label>
+                                <p id="detail-owner" style="margin: 0;"></p>
+                            </div>
+                            <div>
+                                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted);">Uploaded</label>
+                                <p id="detail-created" style="margin: 0;"></p>
+                            </div>
+                        </div>
+                        <div>
+                            <label style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted);">Security Info</label>
+                            <div style="display: grid; gap: 0.5rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fas fa-lock" style="color: var(--success);"></i>
+                                    <span>AES-256-GCM Encrypted</span>
+                                </div>
+                                <div id="detail-signature" style="display: none; display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                    <span>Digitally Signed</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fas fa-key" style="color: var(--primary);"></i>
+                                    <span>RSA-2048 Key Encryption</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" id="details-close-btn">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
