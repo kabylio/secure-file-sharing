@@ -1410,8 +1410,9 @@ a:focus-visible {
 .toast-error { background: var(--danger); }
 .toast-info { background: var(--primary); }
 
+
 .auth-container.hidden {
-    display: none;
+    display: none !important;
 }
 #navbar {
     display: flex;
