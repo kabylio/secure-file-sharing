@@ -161,6 +161,13 @@ function logout() {
     currentToken = null;
     currentUser = null;
     localStorage.removeItem('token');
+     // Clear upload form state
+    elements.fileInput.value = '';
+    elements.uploadDetails.classList.add('hidden');
+    elements.uploadResult.classList.add('hidden');
+    elements.uploadProgress.classList.add('hidden');
+    elements.progressFill.style.width = '0%';
+
     showAuth();
 }
 
@@ -402,6 +409,7 @@ async function uploadFile(file, signFile = false) {
 
         elements.uploadResult.classList.remove('hidden');
         elements.uploadResult.classList.add('success');
+
         elements.uploadResult.classList.remove('error');
         elements.uploadResult.innerHTML = `
             <i class="fas fa-check-circle"></i>
@@ -592,18 +600,24 @@ async function loadSharedFiles() {
         const response = await apiRequest('/files/shared-with-me?skip=0&limit=20');
 
         
-        if (response && response.items) {
-            allFiles.sharedFiles = response.items;
-            paginationState.sharedFiles.total = response.total || 0;
-            paginationState.sharedFiles.hasMore = response.has_more !== false;
-            displaySharedFiles();
-            setupInfiniteScroll();
-        } else {
-            const grid = document.getElementById('shared-files-grid');
-            const empty = document.getElementById('shared-files-empty');
-            grid.innerHTML = '';
-            empty.classList.remove('hidden');
-        }
+        if (Array.isArray(response)) {
+    allFiles.sharedFiles = response;
+    paginationState.sharedFiles.total = response.length;
+    paginationState.sharedFiles.hasMore = false;
+    displaySharedFiles();
+    setupInfiniteScroll();
+} else if (response && response.items) {
+    allFiles.sharedFiles = response.items;
+    paginationState.sharedFiles.total = response.total || 0;
+    paginationState.sharedFiles.hasMore = response.has_more !== false;
+    displaySharedFiles();
+    setupInfiniteScroll();
+} else {
+    const grid = document.getElementById('shared-files-grid');
+    const empty = document.getElementById('shared-files-empty');
+    grid.innerHTML = '';
+    empty.classList.remove('hidden');
+    }
     } catch (error) {
         console.error('Load shared error:', error);
     }
@@ -734,6 +748,14 @@ function showPage(pageName) {
         case 'audit':
             loadAuditLogs();
             break;
+        case 'upload':
+         // Reset upload form when visiting upload page
+        elements.fileInput.value = '';
+        elements.uploadDetails.classList.add('hidden');
+        elements.uploadResult.classList.add('hidden');
+        elements.uploadProgress.classList.add('hidden');
+        elements.progressFill.style.width = '0%';
+        break;    
     }
 }
 
@@ -1397,7 +1419,12 @@ async function loadMoreSharedFiles() {
     try {
         const skip = paginationState.sharedFiles.skip + paginationState.sharedFiles.limit;
         const response = await apiRequest(`/files/shared-with-me?skip=${skip}&limit=${paginationState.sharedFiles.limit}`);
-        if (response && response.items) {
+        
+        if (Array.isArray(response)) {
+            allFiles.sharedFiles = allFiles.sharedFiles.concat(response);
+            paginationState.sharedFiles.hasMore = response.length === paginationState.sharedFiles.limit;
+            displaySharedFiles();
+        } else if (response && response.items) {
             allFiles.sharedFiles = allFiles.sharedFiles.concat(response.items);
             paginationState.sharedFiles.skip = skip;
             paginationState.sharedFiles.hasMore = response.has_more !== false;
