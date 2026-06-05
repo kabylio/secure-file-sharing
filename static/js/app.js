@@ -545,7 +545,7 @@ async function loadMyFiles() {
         filterState.myFiles = { type: '', size: '', date: '' };
         allFiles.myFiles = [];
         
-        const response = await apiRequest('/files/my?skip=0&limit=20');
+        const response = await apiRequest('/files/my-files?skip=0&limit=20');
         
         if (response && response.items) {
             allFiles.myFiles = response.items;
@@ -1348,8 +1348,7 @@ async function loadMoreMyFiles() {
     
     try {
         const skip = paginationState.myFiles.skip + paginationState.myFiles.limit;
-        const response = await apiRequest(`/files/my?skip=${skip}&limit=${paginationState.myFiles.limit}`);
-        
+        const response = await apiRequest(`/files/my-files?skip=${skip}&limit=${paginationState.myFiles.limit}`);
         if (response && response.items) {
             allFiles.myFiles = allFiles.myFiles.concat(response.items);
             paginationState.myFiles.skip = skip;
