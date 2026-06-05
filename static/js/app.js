@@ -553,20 +553,30 @@ async function loadMyFiles() {
         filterState.myFiles = { type: '', size: '', date: '' };
         allFiles.myFiles = [];
         
-        const response = await apiRequest('/files/my-files?skip=0&limit=20');
-        
-        if (response && response.items) {
-            allFiles.myFiles = response.items;
-            paginationState.myFiles.total = response.total || 0;
-            paginationState.myFiles.hasMore = response.has_more !== false;
-            displayMyFiles();
-            setupInfiniteScroll();
-        } else {
-            const grid = document.getElementById('my-files-grid');
-            const empty = document.getElementById('my-files-empty');
-            grid.innerHTML = '';
-            empty.classList.remove('hidden');
-        }
+        // NEW (fixed):
+const response = await apiRequest('/files/my-files?skip=0&limit=20');
+
+// Handle both array and paginated object responses
+if (Array.isArray(response)) {
+    // Direct array response
+    allFiles.myFiles = response;
+    paginationState.myFiles.total = response.length;
+    paginationState.myFiles.hasMore = false;
+    displayMyFiles();
+    setupInfiniteScroll();
+} else if (response && response.items) {
+    // Paginated object response
+    allFiles.myFiles = response.items;
+    paginationState.myFiles.total = response.total || 0;
+    paginationState.myFiles.hasMore = response.has_more !== false;
+    displayMyFiles();
+    setupInfiniteScroll();
+} else {
+    const grid = document.getElementById('my-files-grid');
+    const empty = document.getElementById('my-files-empty');
+    grid.innerHTML = '';
+    empty.classList.remove('hidden');
+}
     } catch (error) {
         console.error('Load files error:', error);
     }
@@ -1356,13 +1366,19 @@ async function loadMoreMyFiles() {
     
     try {
         const skip = paginationState.myFiles.skip + paginationState.myFiles.limit;
+        // NEW:
         const response = await apiRequest(`/files/my-files?skip=${skip}&limit=${paginationState.myFiles.limit}`);
-        if (response && response.items) {
-            allFiles.myFiles = allFiles.myFiles.concat(response.items);
-            paginationState.myFiles.skip = skip;
-            paginationState.myFiles.hasMore = response.has_more !== false;
-            displayMyFiles();
+
+        if (Array.isArray(response)) {
+        allFiles.myFiles = allFiles.myFiles.concat(response);
+        paginationState.myFiles.hasMore = response.length === paginationState.myFiles.limit;
+        displayMyFiles();
+        } else if (response && response.items) {
+        allFiles.myFiles = allFiles.myFiles.concat(response.items);
+        paginationState.myFiles.hasMore = response.has_more !== false;
+        displayMyFiles();
         }
+
     } catch (error) {
         console.error('Error loading more files:', error);
     } finally {
