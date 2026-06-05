@@ -111,6 +111,14 @@ async function apiRequest(endpoint, options = {}) {
     }
 }
 
+// Debug: log all API requests
+const originalApiRequest = apiRequest;
+apiRequest = async function(endpoint, options = {}) {
+    console.log('API Request:', endpoint, 'Token:', currentToken ? 'present' : 'missing');
+    const result = await originalApiRequest(endpoint, options);
+    console.log('API Response:', endpoint, result);
+    return result;
+};
 // ═══════════════════════════════════════════════════════════════
 // AUTHENTICATION
 // ═══════════════════════════════════════════════════════════════
