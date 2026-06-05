@@ -74,7 +74,7 @@ async def security_headers(request: Request, call_next):
         "default-src 'self'; "
         "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "
         "font-src 'self' https://cdnjs.cloudflare.com; "
-        "script-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
         "img-src 'self' data:"
     )
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
