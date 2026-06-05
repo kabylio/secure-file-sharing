@@ -1723,5 +1723,19 @@ async function init() {
     }
 }
 
+
+
+
+// Make functions available for inline onclick handlers
+window.downloadFile = downloadFile;
+window.openShareModal = openShareModal;
+window.openDetailsModal = openDetailsModal;
+window.confirmDelete = confirmDelete;
+window.shareFile = shareFile;
+window.deleteFile = deleteFile;
+window.verifySignature = verifySignature;
+window.closeShareModal = closeShareModal;
+window.closeDetailsModal = closeDetailsModal;
+
 // Start the app
 init();
